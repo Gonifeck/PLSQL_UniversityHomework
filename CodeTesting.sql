@@ -1,23 +1,28 @@
-/*cuarta pregunta*/
-/*Genere un trigger que al momento de generar el despacho, la compra se debe
-encontrar en estado pagada, de lo contrario enviar un error y no permitir el ingreso del
-despacho.*/
-CREATE OR REPLACE TRIGGER generacion_despacho
-    BEFORE INSERT ON DESPACHO
-    FOR EACH ROW 
+/*pregunta cinco*/
+/*Genere un trigger que actualice el stock disponible de el o los productos, una
+vez que la compra haya sido registrada.*/
+CREATE OR REPLACE TRIGGER actualizacion_stock
+    BEFORE INSERT OR UPDATE ON COMPRA
+    FOR EACH ROW
 DECLARE
-    CODIGO_DESPACHO             INTEGER     :=:NEW.monto_carga_GCL;
-    CODIGO_EMPRESA_REPARTO      INTEGER     :=:NEW.monto_carga_GCL;
-    CODIGO_COMPRA               INTEGER     :=:NEW.monto_carga_GCL;
-    FECHA_ENTREGA_PROGRAMADA    DATE        :=:NEW.monto_carga_GCL;
-    FECHA_ENTREGA_REAL          DATE        :=:NEW.monto_carga_GCL;
-    CODIGO_DIR_DESPACHO         INTEGER     :=:NEW.monto_carga_GCL;
-    ESTADO_COMPRA               VALIDACION_COMPRA.ESTADO_COMPRA%TYPE;
+    CODIGO_COMPRA       INTEGER         :=:NEW.CODIGO_PRODUCTO;
+    RUT_USUARIO         VARCHAR2(20)    :=:NEW.RUT_USUARIO;
+    CODIGO_MEDIO_PAGO   INTEGER         :=:NEW.CODIGO_MEDIO_PAGO;
+    CODIGO_PRODUCTO     INTEGER         :=:NEW.CODIGO_PRODUCTO;
+    CODIGO_VALIDACION   INTEGER         :=:NEW.CODIGO_VALIDACION;
+    CANTIDAD            INTEGER         :=:NEW.CANTIDAD;
+    FECHA               DATE            :=:NEW.FECHA;
+    STOCK_PRODUCTO               PRODUCTO.STOCK%TYPE;
 BEGIN
-    ESTADO_COMPRA = SELECT VALIDACION_COMPRA.ESTADO_COMPRA
-    FROM COMPRA, VALIDACION_COMPRA 
-    WHERE COMPRA.CODIGO_VALIDACION = VALIDACION_COMPRA.CODIGO_VALIDACION;
-    IF ESTADO_COMPRA != 'Confirmada' THEN
-        RAISE_APPLICATION_ERROR(-20090, 'El pago de la compra no fue confirmado o fue cancelado');
+    SELECT PRODUCTO.STOCK
+    INTO STOCK_PRODUCTO
+    WHERE PRODUCTO.CODIGO_PRODUCTO = COMPRA.CODIGO_PRODUCTO;
+
+    IF STOCK_PRODUCTO > 0 THEN
+        UPDATE PRODUCTO
+        SET PRODUCTO.STOCK = (STOCK_PRODUCTO-1)
+        WHERE PRODUCTO.CODIGO_PRODUCTO = COMPRA.CODIGO_PRODUCTO;
+    ELSE
+        RAISE_APPLICATION_ERROR(-20090, 'No hay stock disponible');
     END IF;
 END;
