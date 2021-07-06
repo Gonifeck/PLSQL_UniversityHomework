@@ -1,28 +1,16 @@
-/*pregunta cinco*/
-/*Genere un trigger que actualice el stock disponible de el o los productos, una
-vez que la compra haya sido registrada.*/
-CREATE OR REPLACE TRIGGER actualizacion_stock
-    BEFORE INSERT OR UPDATE ON COMPRA
-    FOR EACH ROW
+/*tercera pregunta*/
+/*Crear un trigger que genere el codigo para cada direccion registrada por los
+clientes. Este codigo debe ser unico.*/
+CREATE OR REPLACE TRIGGER direccion_registrada
+    BEFORE INSERT ON DIRECCIONES_DESPACHO
+    FOR EACH ROW 
 DECLARE
-    CODIGO_COMPRA       INTEGER         :=:NEW.CODIGO_PRODUCTO;
-    RUT_USUARIO         VARCHAR2(20)    :=:NEW.RUT_USUARIO;
-    CODIGO_MEDIO_PAGO   INTEGER         :=:NEW.CODIGO_MEDIO_PAGO;
-    CODIGO_PRODUCTO     INTEGER         :=:NEW.CODIGO_PRODUCTO;
-    CODIGO_VALIDACION   INTEGER         :=:NEW.CODIGO_VALIDACION;
-    CANTIDAD            INTEGER         :=:NEW.CANTIDAD;
-    FECHA               DATE            :=:NEW.FECHA;
-    STOCK_PRODUCTO               PRODUCTO.STOCK%TYPE;
+    CODIGO_DIR_DESPACHO INTEGER         :=:NEW.CODIGO_DIR_DESPACHO;
+    CODIGO_CIUDAD       INTEGER         :=:NEW.CODIGO_CIUDAD;
+    NOMBRE              VARCHAR2(20)    :=:NEW.NOMBRE;
+    CALLE               VARCHAR2(100)   :=:NEW.CALLE;
+    NUMERO              INTEGER         :=:NEW.NUMERO;
+    CODIGO_DIR_DESPACHO INTEGER;
 BEGIN
-    SELECT PRODUCTO.STOCK
-    INTO STOCK_PRODUCTO
-    WHERE PRODUCTO.CODIGO_PRODUCTO = COMPRA.CODIGO_PRODUCTO;
-
-    IF STOCK_PRODUCTO > 0 THEN
-        UPDATE PRODUCTO
-        SET PRODUCTO.STOCK = (STOCK_PRODUCTO-1)
-        WHERE PRODUCTO.CODIGO_PRODUCTO = COMPRA.CODIGO_PRODUCTO;
-    ELSE
-        RAISE_APPLICATION_ERROR(-20090, 'No hay stock disponible');
-    END IF;
+    CODIGO_DIR_DESPACHO = CODIGO_DIR_DESPACHO + SELECT count(*) FROM DIRECCIONES_DESPACHO;
 END;
